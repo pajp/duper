@@ -674,8 +674,8 @@ public class GUI implements Duper.ProgressListener {
 	
 	
     void startScanThread() {
-		startScanBtn.setEnabled(false);
-		stopScanBtn.setEnabled(true);
+		resetEnableStates(true);
+		
 		final LinkedList roots = new LinkedList();
 		String[] items = rootList.getItems();
 		for (int i=0; i < items.length; i++) {
@@ -855,14 +855,21 @@ public class GUI implements Duper.ProgressListener {
 			showScanResults();
 		}
 		display.asyncExec(new Runnable() {
-						  public void run() {
-						  if (shell.isDisposed()) return;
-						  
-						  startScanBtn.setEnabled(true);
-						  stopScanBtn.setEnabled(false);
-						  }
+							public void run() {
+								if (shell.isDisposed()) return;
+								resetEnableStates(false);
+							}
 						  });
     }
+	
+	void resetEnableStates(boolean isScanning) {
+		startScanBtn.setEnabled(!isScanning);
+		stopScanBtn.setEnabled(isScanning);
+		enableCacheBtn.setEnabled(!isScanning);
+		enableAggressiveGcBtn.setEnabled(!isScanning);
+		enableMmapBtn.setEnabled(!isScanning);
+		enableOptimizedMd5Btn.setEnabled(!isScanning);		
+	}
 	
     void stopScanThread() {
 		log("Waiting for scan to stop...");

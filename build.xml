@@ -27,7 +27,7 @@ hdiutil create -srcfolder public/mac -volname Duper Duper.dmg
 hdiutil internet-enable -yes Duper.dmg 
 -->
 
-  <target name="macbundle" depends="macapp">
+  <target name="public/Duper.dmg" depends="macbundle">
 	<delete file="public/Duper.dmg"/>
 	<exec executable="hdiutil" os="Mac OS X">
 		<arg line="create -srcfolder public/mac -volname Duper public/Duper.dmg"/>
@@ -37,7 +37,7 @@ hdiutil internet-enable -yes Duper.dmg
 	</exec>
   </target>
   
-  <target name="macapp" depends="duper">
+  <target name="macbundle" depends="duper">
 	<copy todir="public/mac/Duper.app/Contents/MacOS/">
 		<fileset dir="classes/"/>
 	</copy>
