@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="iso-8859-1"?> 
+<jnlp 
+  spec="1.0+" 
+  codebase="http://dll.nu/duper/" 
+  href="md5.jnlp"> 
+  <information> 
+    <title>MD5</title> 
+    <vendor>Timothy W Macinta</vendor> 
+    <homepage href="http://www.twmacinta.com/myjava/fast_md5.php"/> 
+    <description>Java Web Start package by Rasmus Sten</description> 
+  </information> 
+  <security> 
+      <all-permissions/> 
+  </security> 
+  <resources> 
+    <jar href="md5.jar"/> 
+  </resources> 
+  <component-desc/>
+</jnlp> 

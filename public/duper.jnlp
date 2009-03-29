@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="iso-8859-1"?> 
+<jnlp 
+  spec="1.0+" 
+  codebase="http://dll.nu/duper/" 
+  href="duper.jnlp"> 
+  <information> 
+    <title>Duper</title> 
+    <vendor>Rasmus Sten/Bricole</vendor> 
+    <homepage href="http://dll.nu/duper/"/> 
+    <description>A dupe file detection and removal tool</description> 
+  </information> 
+  <security> 
+      <all-permissions/> 
+  </security> 
+  <resources> 
+    <j2se version="1.4+" /> 
+    <jar href="duper.jar"/> 
+    <extension name="swt" href="http://dll.nu/nular/swt/swt.jnlp"/>
+    <extension name="md5" href="http://dll.nu/duper/md5.jnlp"/>
+  </resources> 
+  <application-desc main-class="nu.dll.duper.GUI"/> 
+</jnlp> 

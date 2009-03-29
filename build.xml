@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="iso-8859-1"?>
+
+<!--
+  Denna fil innehåller endast tasks för att bygga och signera jar-filerna.
+
+  För att signera måste filen "build.properties" finnas i samma katalog,
+  och innehålla värden för "storepass" och "storealias" (som motsvarar
+  lösenord och alias i din java-keystore).
+  -->
+
+<project name="duper" default="duper" basedir=".">
+  <property file="build.properties" />
+
+  <target name="duper">
+    <javac srcdir="src" destdir="classes" 
+           bootclasspath="${bootclasspath}">
+      <classpath>
+        <pathelement path="${swt-jar}" />
+        <pathelement path="${md5-jar}" />
+      </classpath>
+    </javac>
+  </target>
+
+
+<!--
+hdiutil create -srcfolder public/mac -volname Duper Duper.dmg
+hdiutil internet-enable -yes Duper.dmg 
+-->
+
+  <target name="macbundle" depends="macapp">
+	<delete file="public/Duper.dmg"/>
+	<exec executable="hdiutil" os="Mac OS X">
+		<arg line="create -srcfolder public/mac -volname Duper public/Duper.dmg"/>
+	</exec>
+	<exec executable="hdiutil" os="Mac OS X">
+		<arg line="internet-enable -yes public/Duper.dmg"/>
+	</exec>
+  </target>
+  
+  <target name="macapp" depends="duper">
+	<copy todir="public/mac/Duper.app/Contents/MacOS/">
+		<fileset dir="classes/"/>
+	</copy>
+  </target>
+
+  <target name="jar" depends="duper">
+    <jar destfile="public/duper.jar">
+      <fileset dir="classes">
+        <include name="**/*.class"/>
+      </fileset>
+      <!-- fileset dir="resources" / -->
+
+      <manifest>
+        <attribute name="Built-By" value="Rasmus Sten"/>
+	<attribute name="Main-Class" value="nu.dll.duper.GUI"/>
+      </manifest>
+    </jar>
+  </target>
+
+  <target name="sign" depends="jar">
+    <echo message="Using store alias ${storealias}" />
+    <signjar jar="public/duper.jar" storepass="${storepass}" alias="${storealias}" />
+  </target>
+
+</project>
