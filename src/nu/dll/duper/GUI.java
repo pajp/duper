@@ -199,7 +199,6 @@ public class GUI implements Duper.ProgressListener {
     }
 	
     public void run() {
-		display.setAppName("Duper");
 		shell = new Shell(display, SWT.CLOSE|SWT.MIN|SWT.MAX|SWT.BORDER|SWT.TITLE|SWT.RESIZE);
 		shell.addShellListener(new ShellAdapter() {
 							   public void shellClosed(ShellEvent e) {
@@ -877,6 +876,7 @@ public class GUI implements Duper.ProgressListener {
     }
     
     public static void main(String[] argv) {
+		Display.setAppName("Duper");
 		new GUI(new Display()).run();
     }
 }
