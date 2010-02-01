@@ -47,7 +47,7 @@ public class Duper {
     List folderIgnorePatterns = new LinkedList();
     List fileIgnorePatterns = new LinkedList();
 	
-    boolean ignoreHidden = true;
+    boolean ignoreHidden = Boolean.getBoolean("duper.ignore-hidden");
     boolean ignoreFileNotFound = true;
 	
     boolean saveChecksums = true;
