@@ -364,23 +364,6 @@ public class Duper {
     }
 	
 	
-    private byte[] calcMD5_old(ByteBuffer buf) throws IOException {
-	md5init();
-	while (buf.hasRemaining()) {
-	    int remaining = buf.remaining();
-	    if (remaining >= blocksize) {
-		buf.get(md5buffer);
-		md5update(md5buffer, 0, md5buffer.length);
-		totalBytesChecksummed += blocksize;
-	    } else {
-		buf.get(md5buffer, 0, remaining);
-		md.Update(md5buffer, 0, remaining);
-		totalBytesChecksummed += remaining;
-	    }
-	}
-	return md.Final();
-    }
-	
     private byte[] calcMD5_stream(InputStream fis) throws IOException {
 	md5init();
 	int bytesRead;
