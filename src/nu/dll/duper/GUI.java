@@ -359,6 +359,8 @@ public class GUI implements Duper.ProgressListener {
 	stopScanBtn.addSelectionListener(new SelectionAdapter() {
 		public void widgetSelected(SelectionEvent e) {
 		    stopScanThread();
+		    stopScanBtn.setEnabled(false);
+		    stopScanBtn.setText("Stopping...");
 		}
 	    });
 		
@@ -856,6 +858,7 @@ public class GUI implements Duper.ProgressListener {
 	display.asyncExec(new Runnable() {
 		public void run() {
 		    if (shell.isDisposed()) return;
+		    stopScanBtn.setText("Stop scan");
 		    resetEnableStates(false);
 		}
 	    });
