@@ -712,7 +712,7 @@ public class GUI implements Duper.ProgressListener {
 		}
 	    };
 	scanThread.setDaemon(true);
-	scanThread.setName("Scan-Thread");
+	scanThread.setName("Traversal-Thread");
 	scanThread.start();
     }
 	

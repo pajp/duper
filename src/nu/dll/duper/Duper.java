@@ -59,7 +59,9 @@ public class Duper {
     static File diskCacheFile = new File(System.getProperty("user.home"), ".duper.cache.gz");
     Writer cacheWriter = null;
     OutputStream cacheStream = null;
-	
+
+    LinkedList<File> fileQueue = new LinkedList<File>();
+    Set<Thread> consumers = new HashSet<Thread>();
     public interface ProgressListener {
 	public void cacheLoadStart();
 	public void cacheLoadStop();
@@ -104,6 +106,37 @@ public class Duper {
 	    }
 	} else {
 	    md = new MD5();
+	}
+	int threads = 2;
+	for (int i=0; i < threads; i++) {
+	    Thread t = new Thread() {
+		    public void run() {
+			dprintln("thread started");
+			while (!aborted) {
+			    File file = null;
+
+			    synchronized (fileQueue) {
+				try {
+				    fileQueue.wait(100);
+				} catch (InterruptedException ex1) {
+				    dprintln("wait() interrupted: " + ex1);
+				}
+				if (fileQueue.size() > 0) file = fileQueue.removeFirst();
+				dprintln("dequeued " + file);
+			    }			    
+			    try {
+				if (file != null) processFile(file);
+			    } catch (IOException ex1) {
+				if (listener != null) listener.ioError(file, ex1);
+			    }
+			}
+			dprintln("thread exiting");
+		    }
+		};
+	    t.setDaemon(true);
+	    t.setName("Consumer-Thread " + i);
+	    consumers.add(t);
+	    t.start();
 	}
 		
     }
@@ -167,6 +200,20 @@ public class Duper {
 	for (Iterator i = roots.iterator();!aborted && i.hasNext();) {
 	    processDirectory((File) i.next());
 	}
+
+	boolean filesInQueue = true;
+	while (!aborted && filesInQueue) {
+	    synchronized (fileQueue) {
+		filesInQueue = fileQueue.size() > 0;
+	    }
+	    dprintln("waiting for queue to deplete");
+	    try {
+		Thread.sleep(100);
+	    } catch (InterruptedException ex1) {
+		dprintln("sleep() interrupted: " + ex1);
+	    }
+	}
+
 	sparehack();
 	if (!aborted && pedantic) {
 	    pedantic();
@@ -182,14 +229,15 @@ public class Duper {
     }
 	
     private void sparehack() {
-	for (Iterator i = dupes.iterator();i.hasNext();) {
-	    Collection l = (Collection) i.next();
-	    if (l.size() == 1) {
-		i.remove();
-	    } else {
-		dupeCount += l.size()-1;
+	synchronized (dupes) {
+	    for (Iterator i = dupes.iterator();i.hasNext();) {
+		Collection l = (Collection) i.next();
+		if (l.size() == 1) {
+		    i.remove();
+		} else {
+		    dupeCount += l.size()-1;
+		}
 	    }
-			
 	}
     }
 	
@@ -274,7 +322,10 @@ public class Duper {
 	    if (files[i].isDirectory()) {
 		processDirectory(files[i]);
 	    } else {
-		processFile(files[i]);
+		synchronized (fileQueue) {
+		    fileQueue.add(files[i]);
+		    fileQueue.notifyAll();
+		}
 	    }
 	}
 	directoriesProcessed++;
@@ -282,6 +333,9 @@ public class Duper {
 	
     void abort() {
 	aborted = true;
+	synchronized (fileQueue) {
+	    fileQueue.clear();
+	}
     }
 	
 	
@@ -324,7 +378,7 @@ public class Duper {
     }
 	
     void dprintln(String s) {
-	System.out.println(s);
+	System.out.println(Thread.currentThread().getName() + ": " + s);
     }
 	
     void compareFiles(List files) throws IOException {
@@ -347,7 +401,9 @@ public class Duper {
 		sumfiles = new HashSet();
 		checksumFileMap.put(md5string, sumfiles);
 	    } else {
-		if (!dupes.contains(sumfiles)) dupes.add(sumfiles);
+		synchronized (dupes) {
+		    if (!dupes.contains(sumfiles)) dupes.add(sumfiles);
+		}
 		//dprintln("(dupe!)");
 	    }
 	    if (!sumfiles.contains(f)) sumfiles.add(f);
