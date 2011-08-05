@@ -11,7 +11,8 @@
 <project name="duper" default="duper" basedir=".">
   <property file="build.properties" />
 
-  <target name="duper">
+
+  <target name="duper" depends="directory-structure">
     <javac srcdir="src" destdir="classes" 
            bootclasspath="${bootclasspath}">
       <classpath>
@@ -20,7 +21,9 @@
       </classpath>
     </javac>
   </target>
-
+  <target name="directory-structure">
+    <mkdir dir="classes" />
+  </target>
 
 <!--
 hdiutil create -srcfolder public/mac -volname Duper Duper.dmg
