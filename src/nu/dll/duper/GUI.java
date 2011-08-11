@@ -390,7 +390,7 @@ public class GUI implements Duper.ProgressListener {
 		
 	gd = new GridData(GridData.FILL_BOTH);
 	gd.horizontalSpan = 2;
-	gd.heightHint = 250;
+	gd.heightHint = 170;
 	dupeTable.setLayoutData(gd);
 		
 	TableColumn namecol = new TableColumn(dupeTable, SWT.LEFT);
