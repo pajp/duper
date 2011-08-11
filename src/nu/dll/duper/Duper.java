@@ -112,7 +112,7 @@ public class Duper {
 	    Thread t = new Thread() {
 		    public void run() {
 			dprintln("thread started");
-			while (!aborted) {
+			while (!aborted && endTime == 0) {
 			    File file = null;
 
 			    synchronized (fileQueue) {
@@ -122,7 +122,7 @@ public class Duper {
 				    dprintln("wait() interrupted: " + ex1);
 				}
 				if (fileQueue.size() > 0) file = fileQueue.removeFirst();
-				dprintln("dequeued " + file);
+				if (debug) dprintln("dequeued " + file + " endTime=" + endTime);
 			    }			    
 			    try {
 				if (file != null) processFile(file);
@@ -165,14 +165,23 @@ public class Duper {
 			    String filename = row;
 			    File file = new File(filename);
 			    String md5 = nextrow;
-			    fileChecksumMap.put(file, md5);
-			    Collection sumfiles = (Collection) checksumFileMap.get(md5);
+			    synchronized (fileChecksumMap) {
+				fileChecksumMap.put(file, md5);
+			    }
+			    Collection sumfiles;
+			    synchronized (checksumFileMap) {
+				sumfiles = (Collection) checksumFileMap.get(md5);
+			    }
 			    if (sumfiles != null) {
-				sumfiles.add(new File(filename));
+				synchronized (sumfiles) {
+				    sumfiles.add(new File(filename));
+				}
 			    } else {
 				sumfiles = new HashSet();
 				sumfiles.add(file);
-				checksumFileMap.put(md5, sumfiles);
+				synchronized (checksumFileMap) {
+				    checksumFileMap.put(md5, sumfiles);
+				}
 			    }
 			    if (debug) {
 				dprintln("Loaded cached MD5 sum for " + file);
@@ -222,8 +231,12 @@ public class Duper {
 	if (listener != null) listener.scanStop(aborted);
 		
 	if (cacheWriter != null) {
-	    cacheWriter.close();
-	    cacheStream.close();
+	    synchronized (cacheWriter) {
+		cacheWriter.close();
+		cacheStream.close();
+		cacheWriter = null;
+		cacheStream = null;
+	    }
 	}
 		
     }
@@ -359,15 +372,20 @@ public class Duper {
 	    }
 	}
 	totalBytes += size.longValue();
-	if (!sizeFileMap.containsKey(size)) {
-	    List files = new LinkedList();
-	    files.add(file);
-	    sizeFileMap.put(size, files);
-	    filesProcessed++;
-	    return;
+	List files; // files of same size
+	synchronized (sizeFileMap) {
+	    if (!sizeFileMap.containsKey(size)) {
+		files = new LinkedList();
+		files.add(file);
+		sizeFileMap.put(size, files);
+		filesProcessed++;
+		return;
+	    }
+	    files = (List) sizeFileMap.get(size);
 	}
-	List files = (List) sizeFileMap.get(size);
-	files.add(file);
+	synchronized (files) {
+	    files.add(file);
+	}
 	//dprintln("Size match (" + size + "): " + files);
 	compareFiles(files);
 	filesProcessed++;
@@ -381,7 +399,11 @@ public class Duper {
 	System.out.println(Thread.currentThread().getName() + ": " + s);
     }
 	
-    void compareFiles(List files) throws IOException {
+    void compareFiles(List _files) throws IOException {
+	List<File> files = new LinkedList<File>();
+	synchronized (_files) {
+	    files.addAll(_files);
+	}
 	for (Iterator i = files.iterator(); i.hasNext();) {
 	    File f = (File) i.next();
 	    String md5string;
@@ -395,8 +417,12 @@ public class Duper {
 		    throw ex1;
 		}
 	    }
-			
-	    Collection sumfiles = (Collection) checksumFileMap.get(md5string);
+
+	    // get files with the same hash
+	    Collection sumfiles;
+	    synchronized (checksumFileMap) {
+		sumfiles = (Collection) checksumFileMap.get(md5string);
+	    }
 	    if (sumfiles == null) {
 		sumfiles = new HashSet();
 		checksumFileMap.put(md5string, sumfiles);
@@ -406,6 +432,7 @@ public class Duper {
 		}
 		//dprintln("(dupe!)");
 	    }
+	    
 	    if (!sumfiles.contains(f)) sumfiles.add(f);
 	}
     }
@@ -485,13 +512,15 @@ public class Duper {
     Set md5debugonce = new HashSet();
     public String getMD5(File file) throws IOException {
 	String filename = file.getAbsolutePath();
-	if (fileChecksumMap.containsKey(file)) {
-	    String md5 = (String) fileChecksumMap.get(file);
-	    if (debug && !md5debugonce.contains(file)) {
-		dprintln(file + " MD5 (cached): " + md5);
-		md5debugonce.add(file);
+	synchronized (fileChecksumMap) {
+	    if (fileChecksumMap.containsKey(file)) {
+		String md5 = (String) fileChecksumMap.get(file);
+		if (debug && !md5debugonce.contains(file)) {
+		    dprintln(file + " MD5 (cached): " + md5);
+		    md5debugonce.add(file);
+		}
+		return md5;
 	    }
-	    return md5;
 	}
 	FileInputStream fis = new FileInputStream(file);
 	byte[] sum;
@@ -511,10 +540,14 @@ public class Duper {
 	    if (debug) {
 		dprintln("writing md5 for " + filename + " to cache.");
 	    }
-	    cacheWriter.write(filename+"\n"+sumstr+"\n");
+	    synchronized (cacheWriter) {
+		cacheWriter.write(filename+"\n"+sumstr+"\n");
+	    }
 	}
-		
-	fileChecksumMap.put(file, sumstr);
+
+	synchronized (fileChecksumMap) {
+	    fileChecksumMap.put(file, sumstr);
+	}
 	if (debug && !md5debugonce.contains(file)) {
 	    dprintln(file + " MD5 (computed): " + sumstr);
 	    md5debugonce.add(file);
@@ -525,8 +558,12 @@ public class Duper {
     public void dispose() {
     }
 	
-    public List getDupes() {
-	return dupes;
+    public List<File> getDupes() {
+	List<File> copy = new LinkedList<File>();
+	synchronized (dupes) {
+	    copy.addAll(dupes);
+	}
+	return copy;
     }
 	
 }
