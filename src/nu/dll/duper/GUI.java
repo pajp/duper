@@ -65,6 +65,7 @@ public class GUI implements Duper.ProgressListener {
 	
     Button startScanBtn;
     Button stopScanBtn;
+    ProgressBar progressBar;
     Text minSizeText;
     Button enableCacheBtn;
     Button enableMmapBtn;
@@ -343,7 +344,9 @@ public class GUI implements Duper.ProgressListener {
 					     "than the default provided with Java");
 		
 	Composite comp2 = new Composite(shell, SWT.NONE);
-	comp2.setLayout(new RowLayout());
+	RowLayout rl = new RowLayout();
+	rl.center = true;
+	comp2.setLayout(rl);
 		
 	startScanBtn = new Button(comp2, SWT.NONE);
 	startScanBtn.setText("Start scan!");
@@ -363,7 +366,10 @@ public class GUI implements Duper.ProgressListener {
 		    stopScanBtn.setText("Stopping...");
 		}
 	    });
-		
+
+	progressBar = new ProgressBar(comp2, SWT.INDETERMINATE|SWT.SMOOTH);
+	progressBar.setVisible(false);
+	progressBar.setState(SWT.PAUSED);
 		
 	consoleList = new List(shell, SWT.MULTI | SWT.V_SCROLL | SWT.H_SCROLL | SWT.BORDER);
 	gd = new GridData(GridData.FILL_HORIZONTAL);
@@ -867,6 +873,7 @@ public class GUI implements Duper.ProgressListener {
     void resetEnableStates(boolean isScanning) {
 	startScanBtn.setEnabled(!isScanning);
 	stopScanBtn.setEnabled(isScanning);
+	progressBar.setVisible(isScanning);
 	enableCacheBtn.setEnabled(!isScanning);
 	enableAggressiveGcBtn.setEnabled(!isScanning);
 	enableMmapBtn.setEnabled(!isScanning);
