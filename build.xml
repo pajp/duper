@@ -45,6 +45,7 @@ hdiutil internet-enable -yes Duper.dmg
 	<copy todir="public/mac/Duper.app/Contents/MacOS/">
 		<fileset dir="classes/"/>
 	</copy>
+	<zip destfile="public/duper-macosx.zip" basedir="public/mac/" includes="Duper.app/**" update="true" />
   </target>
 
   <target name="jar" depends="duper">
