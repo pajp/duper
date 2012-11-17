@@ -107,7 +107,7 @@ public class Duper {
 	} else {
 	    md = new MD5();
 	}
-	int threads = 2;
+	int threads = Runtime.getRuntime().availableProcessors();
 	for (int i=0; i < threads; i++) {
 	    Thread t = new Thread() {
 		    public void run() {
