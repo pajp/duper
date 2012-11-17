@@ -155,42 +155,50 @@ public class Duper {
 		    if (listener != null) {
 			listener.cacheLoadStart();
 		    }
-					
-		    BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(diskCacheFile)), "utf-8"));
-		    String row, lastrow = null;
-		    int count=0;
-		    while ((row = reader.readLine()) != null) {
-			String nextrow = reader.readLine();
-			if (row != null && nextrow != null) {
-			    String filename = row;
-			    File file = new File(filename);
-			    String md5 = nextrow;
-			    synchronized (fileChecksumMap) {
-				fileChecksumMap.put(file, md5);
-			    }
-			    Collection sumfiles;
-			    synchronized (checksumFileMap) {
-				sumfiles = (Collection) checksumFileMap.get(md5);
-			    }
-			    if (sumfiles != null) {
-				synchronized (sumfiles) {
-				    sumfiles.add(new File(filename));
+		    try {
+			BufferedReader reader = new BufferedReader(new InputStreamReader(new GZIPInputStream(new FileInputStream(diskCacheFile)), "utf-8"));
+			String row, lastrow = null;
+			int count=0;
+			while ((row = reader.readLine()) != null) {
+			    String nextrow = reader.readLine();
+			    if (row != null && nextrow != null) {
+				String filename = row;
+				File file = new File(filename);
+				String md5 = nextrow;
+				synchronized (fileChecksumMap) {
+				    fileChecksumMap.put(file, md5);
 				}
-			    } else {
-				sumfiles = new HashSet();
-				sumfiles.add(file);
+				Collection sumfiles;
 				synchronized (checksumFileMap) {
-				    checksumFileMap.put(md5, sumfiles);
+				    sumfiles = (Collection) checksumFileMap.get(md5);
+				}
+				if (sumfiles != null) {
+				    synchronized (sumfiles) {
+					sumfiles.add(new File(filename));
+				    }
+				} else {
+				    sumfiles = new HashSet();
+				    sumfiles.add(file);
+				    synchronized (checksumFileMap) {
+					checksumFileMap.put(md5, sumfiles);
+				    }
+				}
+				if (debug) {
+				    dprintln("Loaded cached MD5 sum for " + file);
 				}
 			    }
-			    if (debug) {
-				dprintln("Loaded cached MD5 sum for " + file);
-			    }
+			    count++;
 			}
-			count++;
+			if (debug) dprintln("cached md5 loaded for " + count + " files");
+			reader.close();
+		    } catch (IOException ex) {
+			if (ex.getMessage().indexOf("Unexpected end of ZLIB input stream") != -1 ||
+			    ex.getMessage().indexOf("Not in GZIP format") != -1) {
+			    dprintln("Corrupted cache, discarding");
+			} else {
+			    throw ex;
+			}
 		    }
-		    if (debug) dprintln("cached md5 loaded for " + count + " files");
-		    reader.close();
 		}
 				
 				
