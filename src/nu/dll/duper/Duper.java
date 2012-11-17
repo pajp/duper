@@ -19,8 +19,8 @@ public class Duper {
     Map checksumFileMap = new HashMap();
     List dupes = new LinkedListHack();
     List roots;
-    MD5 md = null;
-    MessageDigest stdmd = null;
+    ThreadLocal<MD5> md = new ThreadLocal();
+    ThreadLocal<MessageDigest> stdmd = new ThreadLocal();
 	
     long minimumSize = 0;
     int filesProcessed = 0;
@@ -98,23 +98,23 @@ public class Duper {
 	this.stdmd5 = defaultMd5;
 	saveChecksums = checksumDiskCache;
 	if (debug) dprintln("MD5 disk cache enabled: " + saveChecksums);
-	if (defaultMd5) {
-	    try {
-		stdmd = MessageDigest.getInstance("MD5");
-	    } catch (NoSuchAlgorithmException ex1) {
-		throw new RuntimeException(ex1.toString());
-	    }
-	} else {
-	    md = new MD5();
-	}
+
 	int threads = Runtime.getRuntime().availableProcessors();
 	for (int i=0; i < threads; i++) {
 	    Thread t = new Thread() {
 		    public void run() {
 			dprintln("thread started");
+			if (stdmd5) {
+			    try {
+				stdmd.set(MessageDigest.getInstance("MD5"));
+			    } catch (NoSuchAlgorithmException ex) {
+				throw new RuntimeException(ex.toString());
+			    }
+			} else {
+			    md.set(new MD5());
+			}
 			while (!aborted && endTime == 0) {
 			    File file = null;
-
 			    synchronized (fileQueue) {
 				try {
 				    fileQueue.wait(100);
@@ -485,33 +485,33 @@ public class Duper {
     void md5update(ByteBuffer data, int offset, int len) {
 	if (stdmd5) {
 	    if (data.hasArray()) {
-		stdmd.update(data.array(), offset, len);
+		stdmd.get().update(data.array(), offset, len);
 	    } else {
 		byte[] tmpbuf = new byte[len-offset];
 		data.position(offset);
 		data.get(tmpbuf);
-		stdmd.update(tmpbuf, 0, len);
+		stdmd.get().update(tmpbuf, 0, len);
 	    }
 	} else {
 	    byte[] temparray = new byte[len];
 	    data.get(temparray, offset, len);
-	    md.Update(temparray, offset, len);
+	    md.get().Update(temparray, offset, len);
 	}
     }
 	
     byte[] md5digest() {
 	if (stdmd5) {
-	    return stdmd.digest();
+	    return stdmd.get().digest();
 	} else {
-	    return md.Final();
+	    return md.get().Final();
 	}
     }
 	
     void md5init() {
 	if (stdmd5) {
-	    stdmd.reset();
+	    stdmd.get().reset();
 	} else {
-	    md.Init();
+	    md.get().Init();
 	}
     }
 	
