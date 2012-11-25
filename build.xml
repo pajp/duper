@@ -32,7 +32,7 @@ hdiutil create -srcfolder public/mac -volname Duper Duper.dmg
 hdiutil internet-enable -yes Duper.dmg 
 -->
 
-  <target name="public/Duper.dmg" depends="macbundle">
+  <target name="public/Duper.dmg" depends="macbundle-signed">
 	<delete file="public/Duper.dmg"/>
 	<exec executable="hdiutil" os="Mac OS X">
 		<arg line="create -srcfolder public/mac -volname Duper public/Duper.dmg"/>
@@ -40,6 +40,12 @@ hdiutil internet-enable -yes Duper.dmg
 	<exec executable="hdiutil" os="Mac OS X">
 		<arg line="internet-enable -yes public/Duper.dmg"/>
 	</exec>
+  </target>
+
+  <target name="macbundle-signed" depends="macbundle">
+    <exec executable="codesign" os="Mac OS X">
+      <arg line="-s B94C0DCA3001D0AF40C0E0A29EF946DC39BFF13C public/mac/Duper.app" />
+    </exec>
   </target>
   
   <target name="macbundle" depends="duper">
