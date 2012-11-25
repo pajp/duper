@@ -196,7 +196,8 @@ public class Duper {
 			reader.close();
 		    } catch (IOException ex) {
 			if (ex.getMessage().indexOf("Unexpected end of ZLIB input stream") != -1 ||
-			    ex.getMessage().indexOf("Not in GZIP format") != -1) {
+			    ex.getMessage().indexOf("Not in GZIP format") != -1 ||
+			    ex.getMessage().indexOf("invalid block type") != -1) {
 			    dprintln("Corrupted cache, discarding");
 			} else {
 			    throw ex;
