@@ -469,18 +469,31 @@ public class Duper {
 	return md5digest();
     }
 
-    private int max_mmap_size = 134217728; // 128 MiB
+    volatile private int max_mmap_size = 64*1024*1024;
     private byte[] calcMD5_mmap(FileInputStream fis) throws IOException {
 	FileChannel fc = fis.getChannel();
 	int size = (int) fc.size();
 	int bytesRead = 0;
 	md5init();
 	while (bytesRead < size) {
-	    int remaining = size - bytesRead;
-	    int blocksize = size > max_mmap_size ? max_mmap_size : size;
-	    if (remaining < blocksize) blocksize = remaining;
-	    MappedByteBuffer buf = fc.map(FileChannel.MapMode.READ_ONLY, bytesRead, blocksize);
-	    md5update(buf, 0, blocksize);
+	    int blocksize = 0;
+	    boolean ok = false;
+	    while (!ok) {
+		int remaining = size - bytesRead;
+		blocksize = size > max_mmap_size ? max_mmap_size : size;
+		if (remaining < blocksize) blocksize = remaining;
+		MappedByteBuffer buf = fc.map(FileChannel.MapMode.READ_ONLY, bytesRead, blocksize);
+		try {
+		    md5update(buf, 0, blocksize);
+		    ok = true;
+		} catch (OutOfMemoryError ex) {
+		    int new_mmap_size = max_mmap_size / 2;
+		    dprintln("OOM on " + fis + " with block size " + max_mmap_size + ": shrinking block size to " +
+			     new_mmap_size);
+		    max_mmap_size = new_mmap_size;
+		}
+	    }
+	    bytesRead += blocksize;
 	}
 	fc.close();
 	totalBytesChecksummed += size;
