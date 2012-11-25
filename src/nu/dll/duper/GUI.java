@@ -723,19 +723,72 @@ public class GUI implements Duper.ProgressListener {
 	scanThread.setName("Traversal-Thread");
 	scanThread.start();
     }
-	
-    void log(final String s) {
-	display.asyncExec(new Runnable() {
-		public void run() {
-		    if (display.isDisposed() || consoleList.isDisposed()) {
-			System.out.println("[log] " + s);
-			return;
+
+    volatile long lastLogUpdate = 0;
+    java.util.List<String> pendingLogEntries = new LinkedList<String>();
+    Thread logThread = null;
+    synchronized void log(final String s) {
+	if (System.currentTimeMillis() - lastLogUpdate > 1000) {
+	    display.asyncExec(new Runnable() {
+		    public void run() {
+			if (display.isDisposed() || consoleList.isDisposed()) {
+			    System.out.println("[log] " + s);
+			    return;
+			}
+			consoleAppend(s);
+			consoleFocusTail();
+			lastLogUpdate = System.currentTimeMillis();
 		    }
-		    consoleList.add(s);
-		    consoleList.setSelection(consoleList.getItemCount()-1);
-		    consoleList.showSelection();
-		}
-	    });
+		});
+	} else {
+	    if (logThread == null) {
+		logThread = new Thread() {
+			public void run() {
+			    while (true) {
+				try {
+				    Thread.sleep(1000);
+				} catch (InterruptedException e) {
+				    e.printStackTrace();
+				}
+				synchronized (pendingLogEntries) {
+				    if (pendingLogEntries.size() > 0) {
+					final java.util.List<String> listCopy = new LinkedList<String>(pendingLogEntries);
+					pendingLogEntries.clear();
+					display.asyncExec(new Runnable() {
+						public void run() {
+						    if (consoleList.isDisposed() || display.isDisposed()) {
+							System.out.println("Discarding log messages: " + listCopy);
+						    }
+						    for (String entry : listCopy) {
+							consoleAppend(entry);
+						    }
+						    consoleFocusTail();
+						    lastLogUpdate = System.currentTimeMillis();
+						}
+					    });
+				    }
+				}
+			    }
+			}
+		    };
+		logThread.setDaemon(true);
+		logThread.setName("Delayed logging thread");
+		logThread.start();
+	    }
+
+	    synchronized (pendingLogEntries) {
+		System.out.println("Delayed log: " + s);
+		pendingLogEntries.add(s);
+	    }
+	}
+    }
+
+    void consoleAppend(String s) {
+	consoleList.add(s);
+    }
+    void consoleFocusTail() {
+	consoleList.setSelection(consoleList.getItemCount()-1);
+	consoleList.showSelection();
     }
 	
     DateFormat dateFormat = DateFormat.getDateTimeInstance();
