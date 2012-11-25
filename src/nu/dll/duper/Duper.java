@@ -229,7 +229,7 @@ public class Duper {
 	    }
 	    dprintln("waiting for queue to deplete");
 	    try {
-		Thread.sleep(100);
+		Thread.sleep(1000);
 	    } catch (InterruptedException ex1) {
 		dprintln("sleep() interrupted: " + ex1);
 	    }
