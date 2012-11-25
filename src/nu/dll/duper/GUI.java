@@ -803,9 +803,10 @@ public class GUI implements Duper.ProgressListener {
 	long seconds = millis / 1000l;
 	log("Duration: " + seconds + " seconds");
 	log("--------------------------------------------------------------------------");
-		
+	log("Updating file table, this can take a few seconds...");
 	display.syncExec(new Runnable() {
 		public void run() {
+
 		    dupeTable.removeAll();
 		}
 	    });
@@ -874,6 +875,8 @@ public class GUI implements Duper.ProgressListener {
 	}
 	display.syncExec(new Runnable() {
 		public void run() {
+		    consoleAppend("File table updated.");
+		    consoleFocusTail();
 		    doAutoChecking();
 		}
 	    });
