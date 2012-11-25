@@ -411,13 +411,13 @@ public class GUI implements Duper.ProgressListener {
 	sizecol.setText("Size");
 	sizecol.setWidth(80);
 		
-	//TableColumn md5col = new TableColumn(dupeTable, SWT.LEFT);
-	//md5col.setText("MD5");
-	//md5col.setWidth(200);
-		
 	TableColumn timecol = new TableColumn(dupeTable, SWT.LEFT);
 	timecol.setText("Last modified");
 	timecol.setWidth(100);
+
+	TableColumn md5col = new TableColumn(dupeTable, SWT.LEFT);
+	md5col.setText("MD5");
+	md5col.setWidth(200);
 		
 	Composite composite = new Composite(shell, SWT.NONE);
 	//gd = new GridData(GridData.FILL_HORIZONTAL);
@@ -805,6 +805,7 @@ public class GUI implements Duper.ProgressListener {
 			    item.setText(1, f.getParentFile().getAbsolutePath());
 			    item.setText(2, "" + f.length());
 			    item.setText(3, dateFormat.format(new Date(f.lastModified())));
+			    item.setText(4, md5);
 			    item.setData(f);
 			    item.setData("md5", md5);
 								 
