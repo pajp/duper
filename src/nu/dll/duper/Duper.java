@@ -121,7 +121,10 @@ public class Duper {
 				} catch (InterruptedException ex1) {
 				    dprintln("wait() interrupted: " + ex1);
 				}
-				if (fileQueue.size() > 0) file = fileQueue.removeFirst();
+				if (fileQueue.size() > 0) {
+				    file = fileQueue.removeFirst();
+				    fileQueue.notifyAll();
+				}
 				if (debug) dprintln("dequeued " + file + " endTime=" + endTime);
 			    }			    
 			    try {
