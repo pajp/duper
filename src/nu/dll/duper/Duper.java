@@ -499,11 +499,10 @@ public class Duper {
 	totalBytesChecksummed += size;
 	return md5digest();
     }
-	
+
     void md5update(byte[] data, int offset, int len) {
 	md5update(ByteBuffer.wrap(data), offset, len);
     }
-	
 	
     void md5update(ByteBuffer data, int offset, int len) {
 	if (stdmd5) {
