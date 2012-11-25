@@ -1,5 +1,5 @@
 #!/bin/sh
-BASEDIR=`dirname $0`
+BASEDIR=`dirname $0`/../Resources
 exec java \
 	-d32 \
 	-XstartOnFirstThread \
