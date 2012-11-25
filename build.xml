@@ -15,7 +15,8 @@
   <target name="duper" depends="directory-structure">
     <javac srcdir="src" destdir="classes" 
 	   bootclasspath="${bootclasspath}"
-	   includeantruntime="false">
+	   includeantruntime="false"
+	   debug="true">
       <classpath>
         <pathelement path="${swt-jar}" />
         <pathelement path="${md5-jar}" />
